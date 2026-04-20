@@ -30,6 +30,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -267,6 +268,129 @@ public class PhotosTabFragment extends TabFragment {
                         }
                     }
                 });
+
+        mRecyclerView.setDefaultFocusHighlightEnabled(true);
+        mRecyclerView.setFocusableInTouchMode(true);
+
+        if (getActivity() instanceof com.android.providers.media.photopicker.PhotoPickerActivity) {
+            android.util.Log.d("PhotosTabFragment", "Registering PhotosTabFragment for D-pad");
+            ((com.android.providers.media.photopicker.PhotoPickerActivity) getActivity())
+                    .setPhotosTabFragment(this);
+        }
+
+        setupDpadNavigation();
+    }
+
+    public androidx.recyclerview.widget.RecyclerView getRecyclerView() {
+        return mRecyclerView;
+    }
+
+    private int mDpadCurrentPosition = 0;
+
+    public boolean handleDpadKey(int keyCode) {
+        int spanCount = 3;
+        int totalItemCount = mRecyclerView.getAdapter() != null
+                ? mRecyclerView.getAdapter().getItemCount() : 0;
+
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_DPAD_UP:
+                if (mDpadCurrentPosition >= spanCount) {
+                    mDpadCurrentPosition -= spanCount;
+                    mRecyclerView.smoothScrollToPosition(mDpadCurrentPosition);
+                }
+                return true;
+
+            case KeyEvent.KEYCODE_DPAD_DOWN:
+                if (mDpadCurrentPosition + spanCount < totalItemCount) {
+                    mDpadCurrentPosition += spanCount;
+                    mRecyclerView.smoothScrollToPosition(mDpadCurrentPosition);
+                }
+                return true;
+
+            case KeyEvent.KEYCODE_DPAD_LEFT:
+                if (mDpadCurrentPosition > 0) {
+                    mDpadCurrentPosition--;
+                    mRecyclerView.smoothScrollToPosition(mDpadCurrentPosition);
+                }
+                return true;
+
+            case KeyEvent.KEYCODE_DPAD_RIGHT:
+                if (mDpadCurrentPosition + 1 < totalItemCount) {
+                    mDpadCurrentPosition++;
+                    mRecyclerView.smoothScrollToPosition(mDpadCurrentPosition);
+                }
+                return true;
+
+            case KeyEvent.KEYCODE_DPAD_CENTER:
+            case KeyEvent.KEYCODE_ENTER:
+                if (mDpadCurrentPosition >= 0 && mDpadCurrentPosition < totalItemCount) {
+                    RecyclerView.ViewHolder holder =
+                            mRecyclerView.findViewHolderForAdapterPosition(mDpadCurrentPosition);
+                    if (holder != null && holder.itemView != null) {
+                        holder.itemView.performClick();
+                    }
+                }
+                return true;
+
+            default:
+                return false;
+        }
+    }
+
+    private void setupDpadNavigation() {
+        mRecyclerView.setOnKeyListener((View v, int keyCode, KeyEvent event) -> {
+            if (event.getAction() != KeyEvent.ACTION_DOWN) {
+                return false;
+            }
+
+            int spanCount = 3;
+            int totalItemCount = mRecyclerView.getAdapter() != null
+                    ? mRecyclerView.getAdapter().getItemCount() : 0;
+
+            switch (keyCode) {
+                case KeyEvent.KEYCODE_DPAD_UP:
+                    if (mDpadCurrentPosition >= spanCount) {
+                        mDpadCurrentPosition -= spanCount;
+                        mRecyclerView.smoothScrollToPosition(mDpadCurrentPosition);
+                    }
+                    return true;
+
+                case KeyEvent.KEYCODE_DPAD_DOWN:
+                    if (mDpadCurrentPosition + spanCount < totalItemCount) {
+                        mDpadCurrentPosition += spanCount;
+                        mRecyclerView.smoothScrollToPosition(mDpadCurrentPosition);
+                    }
+                    return true;
+
+                case KeyEvent.KEYCODE_DPAD_LEFT:
+                    if (mDpadCurrentPosition > 0) {
+                        mDpadCurrentPosition--;
+                        mRecyclerView.smoothScrollToPosition(mDpadCurrentPosition);
+                    }
+                    return true;
+
+                case KeyEvent.KEYCODE_DPAD_RIGHT:
+                    if (mDpadCurrentPosition + 1 < totalItemCount) {
+                        mDpadCurrentPosition++;
+                        mRecyclerView.smoothScrollToPosition(mDpadCurrentPosition);
+                    }
+                    return true;
+
+                case KeyEvent.KEYCODE_DPAD_CENTER:
+                case KeyEvent.KEYCODE_ENTER:
+                    if (mDpadCurrentPosition >= 0 && mDpadCurrentPosition < totalItemCount) {
+                        RecyclerView.ViewHolder holder =
+                                mRecyclerView.findViewHolderForAdapterPosition(mDpadCurrentPosition);
+                        if (holder != null && holder.itemView != null) {
+                            holder.itemView.performClick();
+                        }
+                    }
+                    return true;
+
+                default:
+                    return false;
+            }
+        });
     }
 
     private void initProgressBar(@NonNull View view) {

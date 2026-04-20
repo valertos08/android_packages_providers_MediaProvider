@@ -19,7 +19,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:focusable="true">
+    android:background="@drawable/picker_item_gradient"
+    android:focusable="true"
+    android:clickable="true">
 
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"

@@ -51,6 +51,7 @@ import android.os.UserHandle;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -84,6 +85,8 @@ import com.android.providers.media.photopicker.data.UserManagerState;
 import com.android.providers.media.photopicker.data.model.Item;
 import com.android.providers.media.photopicker.data.model.UserId;
 import com.android.providers.media.photopicker.ui.TabContainerFragment;
+import com.android.providers.media.photopicker.ui.PhotosTabFragment;
+import com.android.providers.media.photopicker.ui.AlbumsTabFragment;
 import com.android.providers.media.photopicker.util.AccentColorResources;
 import com.android.providers.media.photopicker.util.LayoutModeUtils;
 import com.android.providers.media.photopicker.util.MimeFilterUtils;
@@ -251,6 +254,335 @@ public class PhotoPickerActivity extends AppCompatActivity {
             // This is required to unregister any broadcast receivers.
             mCrossProfileListeners.onDestroy();
         }
+    }
+
+    private int mDpadCurrentPosition = 0;
+    private PhotosTabFragment mPhotosTabFragment;
+    private AlbumsTabFragment mAlbumsTabFragment;
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (handleDpadKey(keyCode)) {
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    private boolean handleDpadKey(int keyCode) {
+        android.view.View view = getCurrentFocus();
+        android.util.Log.d("PhotoPickerActivity", "D-pad key: " + keyCode + ", focus: " + view);
+
+        if (mTabLayout != null && view != null && view.getClass().getName().contains("TabLayout")) {
+            android.util.Log.d("PhotoPickerActivity", "Focus on TabLayout, calling handleDpadInTabLayout");
+            return handleDpadInTabLayout(keyCode);
+        }
+
+        if (mTabLayout != null && (view == mTabLayout || mTabLayout.isSelected())) {
+            android.util.Log.d("PhotoPickerActivity", "TabLayout selected, calling handleDpadInTabLayout");
+            return handleDpadInTabLayout(keyCode);
+        }
+
+        androidx.recyclerview.widget.RecyclerView photoRv = getCurrentTabRecyclerView();
+        if (photoRv != null) {
+            android.util.Log.d("PhotoPickerActivity", "Found RecyclerView: " + photoRv);
+            return handleDpadInRecyclerView(photoRv, keyCode);
+        }
+        return false;
+    }
+
+    private boolean handleDpadInTabLayout(int keyCode) {
+        if (mTabLayout == null || mTabLayout.getTabCount() <= 1) {
+            return false;
+        }
+
+        int current = mTabLayout.getSelectedTabPosition();
+        switch (keyCode) {
+            case android.view.KeyEvent.KEYCODE_DPAD_LEFT:
+                if (current > 0) {
+                    mTabLayout.getTabAt(current - 1).select();
+                    android.util.Log.d("PhotoPickerActivity", "Tab left: " + (current - 1));
+                }
+                return true;
+            case android.view.KeyEvent.KEYCODE_DPAD_RIGHT:
+                if (current < mTabLayout.getTabCount() - 1) {
+                    mTabLayout.getTabAt(current + 1).select();
+                    android.util.Log.d("PhotoPickerActivity", "Tab right: " + (current + 1));
+                }
+                return true;
+            case android.view.KeyEvent.KEYCODE_DPAD_DOWN:
+                android.util.Log.d("PhotoPickerActivity", "DOWN pressed from TabLayout");
+                androidx.recyclerview.widget.RecyclerView rv = getCurrentTabRecyclerView();
+                android.util.Log.d("PhotoPickerActivity", "Current tab RecyclerView: " + rv);
+                if (rv != null) {
+                    mTabLayout.clearFocus();
+                    mDpadCurrentPosition = 0;
+                    mLastFocusedPosition = 0;
+                    rv.scrollToPosition(0);
+                    rv.post(() -> {
+                        androidx.recyclerview.widget.RecyclerView.ViewHolder holder = rv.findViewHolderForAdapterPosition(0);
+                        if (holder != null && holder.itemView != null) {
+                            holder.itemView.setFocusable(true);
+                            holder.itemView.setFocusableInTouchMode(true);
+                            holder.itemView.requestFocus();
+                            holder.itemView.setSelected(true);
+                        }
+                    });
+                }
+                return true;
+            case android.view.KeyEvent.KEYCODE_DPAD_UP:
+                androidx.recyclerview.widget.RecyclerView rvUp = getCurrentTabRecyclerView();
+                if (rvUp != null) {
+                    mDpadCurrentPosition = 0;
+                    mLastFocusedPosition = 0;
+                    rvUp.scrollToPosition(0);
+                }
+                return true;
+        }
+        return false;
+    }
+
+    private androidx.recyclerview.widget.RecyclerView getCurrentTabRecyclerView() {
+        if (mTabLayout != null) {
+            int selectedTab = mTabLayout.getSelectedTabPosition();
+            android.util.Log.d("PhotoPickerActivity", "Selected tab: " + selectedTab);
+            
+            if (selectedTab == 0 && mPhotosTabFragment != null) {
+                androidx.recyclerview.widget.RecyclerView rv = mPhotosTabFragment.getRecyclerView();
+                android.util.Log.d("PhotoPickerActivity", "Using PhotosTabFragment RecyclerView: " + rv);
+                return rv;
+            } else if (selectedTab == 1 && mAlbumsTabFragment != null) {
+                androidx.recyclerview.widget.RecyclerView rv = mAlbumsTabFragment.getRecyclerView();
+                android.util.Log.d("PhotoPickerActivity", "Using AlbumsTabFragment RecyclerView: " + rv);
+                return rv;
+            }
+        }
+        return null;
+    }
+
+    private androidx.recyclerview.widget.RecyclerView getPhotoRecyclerView() {
+        if (mPhotosTabFragment != null) {
+            return mPhotosTabFragment.getRecyclerView();
+        }
+        return null;
+    }
+
+    private androidx.recyclerview.widget.RecyclerView findRecyclerViewRecursive(android.view.View view) {
+        if (view == null) return null;
+        
+        String className = view.getClass().getName();
+        android.util.Log.d("PhotoPickerActivity", "findRecyclerViewRecursive: " + view + " class=" + className);
+        
+        if (view instanceof androidx.recyclerview.widget.RecyclerView) {
+            androidx.recyclerview.widget.RecyclerView rv = (androidx.recyclerview.widget.RecyclerView) view;
+            android.util.Log.d("PhotoPickerActivity", "Found RecyclerView, adapter=" + rv.getAdapter() + ", items=" + (rv.getAdapter() != null ? rv.getAdapter().getItemCount() : 0));
+            if (rv.getAdapter() != null && rv.getAdapter().getItemCount() > 0) {
+                return rv;
+            }
+        }
+
+        if (view instanceof android.view.ViewGroup) {
+            android.view.ViewGroup vg = (android.view.ViewGroup) view;
+            for (int i = 0; i < vg.getChildCount(); i++) {
+                androidx.recyclerview.widget.RecyclerView rv = findRecyclerViewRecursive(vg.getChildAt(i));
+                if (rv != null) {
+                    return rv;
+                }
+            }
+        }
+        return null;
+    }
+
+    private int mLastFocusedPosition = -1;
+
+    private void focusAndScrollToPosition(androidx.recyclerview.widget.RecyclerView rv, int position) {
+        if (mLastFocusedPosition >= 0 && mLastFocusedPosition != position) {
+            androidx.recyclerview.widget.RecyclerView.ViewHolder lastHolder =
+                    rv.findViewHolderForAdapterPosition(mLastFocusedPosition);
+            if (lastHolder != null && lastHolder.itemView != null) {
+                clearHighlightImmediate(lastHolder.itemView);
+            }
+        }
+        mDpadCurrentPosition = position;
+        mLastFocusedPosition = position;
+        rv.scrollToPosition(position);
+        rv.post(() -> {
+            androidx.recyclerview.widget.RecyclerView.ViewHolder holder =
+                    rv.findViewHolderForAdapterPosition(position);
+            if (holder != null && holder.itemView != null) {
+                applyHighlightImmediate(holder.itemView);
+            }
+        });
+    }
+
+    private void applyHighlightImmediate(android.view.View view) {
+        view.setSelected(true);
+        if (view instanceof android.view.ViewGroup) {
+            android.view.ViewGroup vg = (android.view.ViewGroup) view;
+            for (int i = 0; i < vg.getChildCount(); i++) {
+                android.view.View child = vg.getChildAt(i);
+                if (child instanceof com.google.android.material.card.MaterialCardView) {
+                    com.google.android.material.card.MaterialCardView card =
+                            (com.google.android.material.card.MaterialCardView) child;
+                    card.setElevation(4f);
+                    card.setStrokeWidth(8);
+                    card.setStrokeColor(0xFF1E88E5);  // Blue 600 from DocumentsUI
+                } else if (child instanceof android.view.View) {
+                    child.setActivated(true);
+                }
+            }
+        }
+    }
+
+    private void clearHighlightImmediate(android.view.View view) {
+        view.setSelected(false);
+        view.setActivated(false);
+        if (view instanceof android.view.ViewGroup) {
+            android.view.ViewGroup vg = (android.view.ViewGroup) view;
+            for (int i = 0; i < vg.getChildCount(); i++) {
+                android.view.View child = vg.getChildAt(i);
+                if (child instanceof com.google.android.material.card.MaterialCardView) {
+                    com.google.android.material.card.MaterialCardView card =
+                            (com.google.android.material.card.MaterialCardView) child;
+                    card.setElevation(0f);
+                    card.setStrokeWidth(0);
+                }
+            }
+        }
+    }
+
+    private void applyHighlight(android.view.View view) {
+        view.setSelected(true);
+        view.setBackgroundColor(0xFF6200EE);  // Material Purple (colorSecondary)
+        if (view instanceof android.view.ViewGroup) {
+            android.view.ViewGroup vg = (android.view.ViewGroup) view;
+            for (int i = 0; i < vg.getChildCount(); i++) {
+                android.view.View child = vg.getChildAt(i);
+                if (child instanceof com.google.android.material.card.MaterialCardView) {
+                    com.google.android.material.card.MaterialCardView card =
+                            (com.google.android.material.card.MaterialCardView) child;
+                    card.setElevation(4f);
+                    card.setStrokeWidth(8);
+                    card.setStrokeColor(0xFF6200EE);  // Material Purple
+                    card.setTag("highlighted");
+                }
+            }
+        }
+    }
+
+    private void clearHighlight(android.view.View view) {
+        view.setSelected(false);
+        view.setBackgroundResource(0);
+        if (view instanceof android.view.ViewGroup) {
+            android.view.ViewGroup vg = (android.view.ViewGroup) view;
+            for (int i = 0; i < vg.getChildCount(); i++) {
+                android.view.View child = vg.getChildAt(i);
+                if (child instanceof com.google.android.material.card.MaterialCardView && "highlighted".equals(child.getTag())) {
+                    com.google.android.material.card.MaterialCardView card =
+                            (com.google.android.material.card.MaterialCardView) child;
+                    card.setElevation(0f);
+                    card.setStrokeWidth(0);
+                    card.setTag(null);
+                }
+            }
+        }
+    }
+
+    private void clearHighlightImmediateAll(androidx.recyclerview.widget.RecyclerView rv) {
+        if (rv != null && rv.getAdapter() != null) {
+            int count = rv.getAdapter().getItemCount();
+            for (int i = 0; i < count; i++) {
+                androidx.recyclerview.widget.RecyclerView.ViewHolder holder = rv.findViewHolderForAdapterPosition(i);
+                if (holder != null && holder.itemView != null) {
+                    clearHighlightImmediate(holder.itemView);
+                }
+            }
+        }
+    }
+
+    private boolean handleDpadInRecyclerView(androidx.recyclerview.widget.RecyclerView rv, int keyCode) {
+        int spanCount = 3;
+        if (rv.getLayoutManager() instanceof androidx.recyclerview.widget.GridLayoutManager) {
+            spanCount = ((androidx.recyclerview.widget.GridLayoutManager) rv.getLayoutManager()).getSpanCount();
+        }
+        int column = mDpadCurrentPosition % spanCount;
+        int row = mDpadCurrentPosition / spanCount;
+        int total = rv.getAdapter() != null ? rv.getAdapter().getItemCount() : 0;
+        android.util.Log.d("PhotoPickerActivity", "handleDpadInRecyclerView: key=" + keyCode + ", pos=" + mDpadCurrentPosition + ", col=" + column + ", row=" + row + ", span=" + spanCount + ", total=" + total);
+
+        switch (keyCode) {
+            case android.view.KeyEvent.KEYCODE_DPAD_UP:
+                android.util.Log.d("PhotoPickerActivity", "UP pressed, pos=" + mDpadCurrentPosition + ", spanCount=" + spanCount + ", row=" + row);
+                if (mDpadCurrentPosition >= spanCount) {
+                    int newPos = (row - 1) * spanCount + column;
+                    if (newPos >= 0) {
+                        focusAndScrollToPosition(rv, newPos);
+                    }
+                } else if (mDpadCurrentPosition < spanCount && mTabLayout != null) {
+                    androidx.recyclerview.widget.RecyclerView photoRv = getCurrentTabRecyclerView();
+                    clearHighlightImmediateAll(photoRv);
+                    if (mTabLayout.getTabCount() > 0) {
+                        android.util.Log.d("PhotoPickerActivity", "Requesting focus on TabLayout");
+                        mTabLayout.setFocusable(true);
+                        mTabLayout.setFocusableInTouchMode(true);
+                        mTabLayout.setClickable(true);
+                        mTabLayout.getTabAt(mTabLayout.getSelectedTabPosition()).select();
+                        mTabLayout.requestFocus();
+                        int selected = mTabLayout.getSelectedTabPosition();
+                        if (selected >= 0 && mTabLayout.getTabCount() > selected) {
+                            com.google.android.material.tabs.TabLayout.Tab tab = mTabLayout.getTabAt(selected);
+                            if (tab != null && tab.getCustomView() != null) {
+                                tab.getCustomView().requestFocus();
+                            }
+                        }
+                    }
+                    mDpadCurrentPosition = -1;
+                }
+                return true;
+            case android.view.KeyEvent.KEYCODE_DPAD_DOWN:
+                int nextRow = row + 1;
+                int newPos = nextRow * spanCount + column;
+                if (newPos < total) {
+                    focusAndScrollToPosition(rv, newPos);
+                } else {
+                    int lastRow = (total - 1) / spanCount;
+                    int lastRowStart = lastRow * spanCount;
+                    if (lastRowStart + column < total) {
+                        focusAndScrollToPosition(rv, lastRowStart + column);
+                    } else {
+                        focusAndScrollToPosition(rv, total - 1);
+                    }
+                }
+                return true;
+            case android.view.KeyEvent.KEYCODE_DPAD_LEFT:
+                if (mDpadCurrentPosition > 0) {
+                    focusAndScrollToPosition(rv, mDpadCurrentPosition - 1);
+                }
+                return true;
+            case android.view.KeyEvent.KEYCODE_DPAD_RIGHT:
+                if (mDpadCurrentPosition + 1 < total) {
+                    focusAndScrollToPosition(rv, mDpadCurrentPosition + 1);
+                }
+                return true;
+            case android.view.KeyEvent.KEYCODE_DPAD_CENTER:
+            case android.view.KeyEvent.KEYCODE_ENTER:
+                if (mDpadCurrentPosition >= 0 && mDpadCurrentPosition < total) {
+                    androidx.recyclerview.widget.RecyclerView.ViewHolder holder =
+                            rv.findViewHolderForAdapterPosition(mDpadCurrentPosition);
+                    if (holder != null && holder.itemView != null) {
+                        holder.itemView.performClick();
+                    }
+                }
+                return true;
+        }
+        return false;
+    }
+
+    public void setPhotosTabFragment(com.android.providers.media.photopicker.ui.PhotosTabFragment fragment) {
+        mPhotosTabFragment = fragment;
+    }
+
+    public void setAlbumsTabFragment(com.android.providers.media.photopicker.ui.AlbumsTabFragment fragment) {
+        mAlbumsTabFragment = fragment;
     }
 
     /**

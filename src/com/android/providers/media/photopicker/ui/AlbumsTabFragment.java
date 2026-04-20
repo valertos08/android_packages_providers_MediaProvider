@@ -41,6 +41,12 @@ public class AlbumsTabFragment extends TabFragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        
+        if (getActivity() instanceof com.android.providers.media.photopicker.PhotoPickerActivity) {
+            ((com.android.providers.media.photopicker.PhotoPickerActivity) getActivity())
+                    .setAlbumsTabFragment(this);
+        }
+        
         final Context context = requireContext();
 
         // Set the pane title for A11y.

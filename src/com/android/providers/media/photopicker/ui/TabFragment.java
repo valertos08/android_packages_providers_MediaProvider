@@ -88,6 +88,10 @@ public abstract class TabFragment extends Fragment {
     protected ImageLoader mImageLoader;
     protected AutoFitRecyclerView mRecyclerView;
 
+    public androidx.recyclerview.widget.RecyclerView getRecyclerView() {
+        return mRecyclerView;
+    }
+
     private ExtendedFloatingActionButton mProfileButton;
     private ExtendedFloatingActionButton mProfileMenuButton;
     private UserIdManager mUserIdManager;
