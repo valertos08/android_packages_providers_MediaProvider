@@ -273,9 +273,13 @@ public class PhotosTabFragment extends TabFragment {
         mRecyclerView.setFocusableInTouchMode(true);
 
         if (getActivity() instanceof com.android.providers.media.photopicker.PhotoPickerActivity) {
-            android.util.Log.d("PhotosTabFragment", "Registering PhotosTabFragment for D-pad");
-            ((com.android.providers.media.photopicker.PhotoPickerActivity) getActivity())
-                    .setPhotosTabFragment(this);
+            com.android.providers.media.photopicker.PhotoPickerActivity activity =
+                    (com.android.providers.media.photopicker.PhotoPickerActivity) getActivity();
+            if (mCategory.isDefault()) {
+                activity.setPhotosTabFragment(this);
+            } else {
+                activity.setAlbumContentPhotosFragment(this);
+            }
         }
 
         setupDpadNavigation();
@@ -293,21 +297,22 @@ public class PhotosTabFragment extends TabFragment {
                 ? mRecyclerView.getAdapter().getItemCount() : 0;
 
         switch (keyCode) {
-            case KeyEvent.KEYCODE_DPAD_UP:
-                if (mDpadCurrentPosition >= spanCount) {
-                    mDpadCurrentPosition -= spanCount;
-                    mRecyclerView.smoothScrollToPosition(mDpadCurrentPosition);
-                }
-                return true;
-
             case KeyEvent.KEYCODE_DPAD_DOWN:
                 if (mDpadCurrentPosition + spanCount < totalItemCount) {
                     mDpadCurrentPosition += spanCount;
                     mRecyclerView.smoothScrollToPosition(mDpadCurrentPosition);
+                } else {
+                    android.widget.Button addBtn = getAddButton();
+                    if (addBtn != null) {
+                        addBtn.setFocusable(true);
+                        addBtn.setFocusableInTouchMode(true);
+                        addBtn.requestFocus();
+                        mDpadCurrentPosition = totalItemCount;
+                    }
                 }
                 return true;
 
-            case KeyEvent.KEYCODE_DPAD_LEFT:
+                case KeyEvent.KEYCODE_DPAD_LEFT:
                 if (mDpadCurrentPosition > 0) {
                     mDpadCurrentPosition--;
                     mRecyclerView.smoothScrollToPosition(mDpadCurrentPosition);
@@ -348,17 +353,32 @@ public class PhotosTabFragment extends TabFragment {
                     ? mRecyclerView.getAdapter().getItemCount() : 0;
 
             switch (keyCode) {
-                case KeyEvent.KEYCODE_DPAD_UP:
-                    if (mDpadCurrentPosition >= spanCount) {
-                        mDpadCurrentPosition -= spanCount;
-                        mRecyclerView.smoothScrollToPosition(mDpadCurrentPosition);
-                    }
-                    return true;
-
                 case KeyEvent.KEYCODE_DPAD_DOWN:
                     if (mDpadCurrentPosition + spanCount < totalItemCount) {
                         mDpadCurrentPosition += spanCount;
                         mRecyclerView.smoothScrollToPosition(mDpadCurrentPosition);
+                    } else {
+                        android.widget.Button addBtn = getAddButton();
+                        if (addBtn != null) {
+                            addBtn.setFocusable(true);
+                            addBtn.setFocusableInTouchMode(true);
+                            addBtn.requestFocus();
+                            mDpadCurrentPosition = totalItemCount;
+                        }
+                    }
+                    return true;
+
+                case KeyEvent.KEYCODE_DPAD_UP:
+                    if (mDpadCurrentPosition >= totalItemCount) {
+                        mDpadCurrentPosition = totalItemCount - 1;
+                    }
+                    if (mDpadCurrentPosition >= spanCount) {
+                        mDpadCurrentPosition -= spanCount;
+                        mRecyclerView.smoothScrollToPosition(mDpadCurrentPosition);
+                        RecyclerView.ViewHolder holder = mRecyclerView.findViewHolderForAdapterPosition(mDpadCurrentPosition);
+                        if (holder != null) {
+                            holder.itemView.requestFocus();
+                        }
                     }
                     return true;
 

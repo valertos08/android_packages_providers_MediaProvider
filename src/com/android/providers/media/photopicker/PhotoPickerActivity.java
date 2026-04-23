@@ -258,7 +258,26 @@ public class PhotoPickerActivity extends AppCompatActivity {
 
     private int mDpadCurrentPosition = 0;
     private PhotosTabFragment mPhotosTabFragment;
+    private PhotosTabFragment mAlbumContentPhotosFragment;
     private AlbumsTabFragment mAlbumsTabFragment;
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER || event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
+            if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                android.widget.Button addBtn = getAddButtonFromFragment();
+                android.view.View focus = getCurrentFocus();
+                if (focus != null && focus.equals(addBtn)) {
+                    addBtn.performClick();
+                    return true;
+                }
+                if (handleDpadKey(event.getKeyCode())) {
+                    return true;
+                }
+            }
+        }
+        return super.dispatchKeyEvent(event);
+    }
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -270,21 +289,17 @@ public class PhotoPickerActivity extends AppCompatActivity {
 
     private boolean handleDpadKey(int keyCode) {
         android.view.View view = getCurrentFocus();
-        android.util.Log.d("PhotoPickerActivity", "D-pad key: " + keyCode + ", focus: " + view);
 
         if (mTabLayout != null && view != null && view.getClass().getName().contains("TabLayout")) {
-            android.util.Log.d("PhotoPickerActivity", "Focus on TabLayout, calling handleDpadInTabLayout");
             return handleDpadInTabLayout(keyCode);
         }
 
         if (mTabLayout != null && (view == mTabLayout || mTabLayout.isSelected())) {
-            android.util.Log.d("PhotoPickerActivity", "TabLayout selected, calling handleDpadInTabLayout");
             return handleDpadInTabLayout(keyCode);
         }
 
         androidx.recyclerview.widget.RecyclerView photoRv = getCurrentTabRecyclerView();
         if (photoRv != null) {
-            android.util.Log.d("PhotoPickerActivity", "Found RecyclerView: " + photoRv);
             return handleDpadInRecyclerView(photoRv, keyCode);
         }
         return false;
@@ -300,19 +315,15 @@ public class PhotoPickerActivity extends AppCompatActivity {
             case android.view.KeyEvent.KEYCODE_DPAD_LEFT:
                 if (current > 0) {
                     mTabLayout.getTabAt(current - 1).select();
-                    android.util.Log.d("PhotoPickerActivity", "Tab left: " + (current - 1));
                 }
                 return true;
             case android.view.KeyEvent.KEYCODE_DPAD_RIGHT:
                 if (current < mTabLayout.getTabCount() - 1) {
                     mTabLayout.getTabAt(current + 1).select();
-                    android.util.Log.d("PhotoPickerActivity", "Tab right: " + (current + 1));
                 }
                 return true;
             case android.view.KeyEvent.KEYCODE_DPAD_DOWN:
-                android.util.Log.d("PhotoPickerActivity", "DOWN pressed from TabLayout");
                 androidx.recyclerview.widget.RecyclerView rv = getCurrentTabRecyclerView();
-                android.util.Log.d("PhotoPickerActivity", "Current tab RecyclerView: " + rv);
                 if (rv != null) {
                     mTabLayout.clearFocus();
                     mDpadCurrentPosition = 0;
@@ -324,17 +335,9 @@ public class PhotoPickerActivity extends AppCompatActivity {
                             holder.itemView.setFocusable(true);
                             holder.itemView.setFocusableInTouchMode(true);
                             holder.itemView.requestFocus();
-                            holder.itemView.setSelected(true);
+                            applyHighlightImmediate(holder.itemView);
                         }
                     });
-                }
-                return true;
-            case android.view.KeyEvent.KEYCODE_DPAD_UP:
-                androidx.recyclerview.widget.RecyclerView rvUp = getCurrentTabRecyclerView();
-                if (rvUp != null) {
-                    mDpadCurrentPosition = 0;
-                    mLastFocusedPosition = 0;
-                    rvUp.scrollToPosition(0);
                 }
                 return true;
         }
@@ -342,19 +345,33 @@ public class PhotoPickerActivity extends AppCompatActivity {
     }
 
     private androidx.recyclerview.widget.RecyclerView getCurrentTabRecyclerView() {
+        if (mAlbumContentPhotosFragment != null) {
+            return mAlbumContentPhotosFragment.getRecyclerView();
+        }
         if (mTabLayout != null) {
             int selectedTab = mTabLayout.getSelectedTabPosition();
-            android.util.Log.d("PhotoPickerActivity", "Selected tab: " + selectedTab);
-            
             if (selectedTab == 0 && mPhotosTabFragment != null) {
-                androidx.recyclerview.widget.RecyclerView rv = mPhotosTabFragment.getRecyclerView();
-                android.util.Log.d("PhotoPickerActivity", "Using PhotosTabFragment RecyclerView: " + rv);
-                return rv;
+                return mPhotosTabFragment.getRecyclerView();
             } else if (selectedTab == 1 && mAlbumsTabFragment != null) {
-                androidx.recyclerview.widget.RecyclerView rv = mAlbumsTabFragment.getRecyclerView();
-                android.util.Log.d("PhotoPickerActivity", "Using AlbumsTabFragment RecyclerView: " + rv);
-                return rv;
+                return mAlbumsTabFragment.getRecyclerView();
             }
+        }
+        return null;
+    }
+
+    private android.widget.Button getAddButtonFromFragment() {
+        if (mAlbumContentPhotosFragment != null) {
+            android.widget.Button btn = mAlbumContentPhotosFragment.getAddButton();
+            if (btn != null) return btn;
+        }
+        if (mPhotosTabFragment != null) {
+            android.widget.Button btn = mPhotosTabFragment.getAddButton();
+            if (btn != null) return btn;
+        }
+        android.view.View root = getWindow().getDecorView();
+        if (root != null) {
+            android.widget.Button btn = root.findViewWithTag("add");
+            if (btn != null) return btn;
         }
         return null;
     }
@@ -370,11 +387,9 @@ public class PhotoPickerActivity extends AppCompatActivity {
         if (view == null) return null;
         
         String className = view.getClass().getName();
-        android.util.Log.d("PhotoPickerActivity", "findRecyclerViewRecursive: " + view + " class=" + className);
         
         if (view instanceof androidx.recyclerview.widget.RecyclerView) {
             androidx.recyclerview.widget.RecyclerView rv = (androidx.recyclerview.widget.RecyclerView) view;
-            android.util.Log.d("PhotoPickerActivity", "Found RecyclerView, adapter=" + rv.getAdapter() + ", items=" + (rv.getAdapter() != null ? rv.getAdapter().getItemCount() : 0));
             if (rv.getAdapter() != null && rv.getAdapter().getItemCount() > 0) {
                 return rv;
             }
@@ -415,7 +430,6 @@ public class PhotoPickerActivity extends AppCompatActivity {
     }
 
     private void applyHighlightImmediate(android.view.View view) {
-        view.setSelected(true);
         if (view instanceof android.view.ViewGroup) {
             android.view.ViewGroup vg = (android.view.ViewGroup) view;
             for (int i = 0; i < vg.getChildCount(); i++) {
@@ -425,17 +439,13 @@ public class PhotoPickerActivity extends AppCompatActivity {
                             (com.google.android.material.card.MaterialCardView) child;
                     card.setElevation(4f);
                     card.setStrokeWidth(8);
-                    card.setStrokeColor(0xFF1E88E5);  // Blue 600 from DocumentsUI
-                } else if (child instanceof android.view.View) {
-                    child.setActivated(true);
+                    card.setStrokeColor(0xFF1E88E5);
                 }
             }
         }
     }
 
     private void clearHighlightImmediate(android.view.View view) {
-        view.setSelected(false);
-        view.setActivated(false);
         if (view instanceof android.view.ViewGroup) {
             android.view.ViewGroup vg = (android.view.ViewGroup) view;
             for (int i = 0; i < vg.getChildCount(); i++) {
@@ -451,8 +461,6 @@ public class PhotoPickerActivity extends AppCompatActivity {
     }
 
     private void applyHighlight(android.view.View view) {
-        view.setSelected(true);
-        view.setBackgroundColor(0xFF6200EE);  // Material Purple (colorSecondary)
         if (view instanceof android.view.ViewGroup) {
             android.view.ViewGroup vg = (android.view.ViewGroup) view;
             for (int i = 0; i < vg.getChildCount(); i++) {
@@ -462,7 +470,7 @@ public class PhotoPickerActivity extends AppCompatActivity {
                             (com.google.android.material.card.MaterialCardView) child;
                     card.setElevation(4f);
                     card.setStrokeWidth(8);
-                    card.setStrokeColor(0xFF6200EE);  // Material Purple
+                    card.setStrokeColor(0xFF6200EE);
                     card.setTag("highlighted");
                 }
             }
@@ -470,8 +478,6 @@ public class PhotoPickerActivity extends AppCompatActivity {
     }
 
     private void clearHighlight(android.view.View view) {
-        view.setSelected(false);
-        view.setBackgroundResource(0);
         if (view instanceof android.view.ViewGroup) {
             android.view.ViewGroup vg = (android.view.ViewGroup) view;
             for (int i = 0; i < vg.getChildCount(); i++) {
@@ -507,11 +513,24 @@ public class PhotoPickerActivity extends AppCompatActivity {
         int column = mDpadCurrentPosition % spanCount;
         int row = mDpadCurrentPosition / spanCount;
         int total = rv.getAdapter() != null ? rv.getAdapter().getItemCount() : 0;
-        android.util.Log.d("PhotoPickerActivity", "handleDpadInRecyclerView: key=" + keyCode + ", pos=" + mDpadCurrentPosition + ", col=" + column + ", row=" + row + ", span=" + spanCount + ", total=" + total);
+
+        android.view.View focus = getCurrentFocus();
+        android.widget.Button addBtn = getAddButtonFromFragment();
 
         switch (keyCode) {
             case android.view.KeyEvent.KEYCODE_DPAD_UP:
-                android.util.Log.d("PhotoPickerActivity", "UP pressed, pos=" + mDpadCurrentPosition + ", spanCount=" + spanCount + ", row=" + row);
+                if (focus != null && focus.equals(addBtn)) {
+                    addBtn.clearFocus();
+                    int lastRow = (total - 1) / spanCount;
+                    int lastRowStart = lastRow * spanCount;
+                    int newPos = lastRowStart + column;
+                    if (newPos < total) {
+                        focusAndScrollToPosition(rv, newPos);
+                    } else {
+                        focusAndScrollToPosition(rv, total - 1);
+                    }
+                    return true;
+                }
                 if (mDpadCurrentPosition >= spanCount) {
                     int newPos = (row - 1) * spanCount + column;
                     if (newPos >= 0) {
@@ -521,7 +540,6 @@ public class PhotoPickerActivity extends AppCompatActivity {
                     androidx.recyclerview.widget.RecyclerView photoRv = getCurrentTabRecyclerView();
                     clearHighlightImmediateAll(photoRv);
                     if (mTabLayout.getTabCount() > 0) {
-                        android.util.Log.d("PhotoPickerActivity", "Requesting focus on TabLayout");
                         mTabLayout.setFocusable(true);
                         mTabLayout.setFocusableInTouchMode(true);
                         mTabLayout.setClickable(true);
@@ -540,16 +558,29 @@ public class PhotoPickerActivity extends AppCompatActivity {
                 return true;
             case android.view.KeyEvent.KEYCODE_DPAD_DOWN:
                 int nextRow = row + 1;
-                int newPos = nextRow * spanCount + column;
-                if (newPos < total) {
-                    focusAndScrollToPosition(rv, newPos);
-                } else {
-                    int lastRow = (total - 1) / spanCount;
-                    int lastRowStart = lastRow * spanCount;
-                    if (lastRowStart + column < total) {
-                        focusAndScrollToPosition(rv, lastRowStart + column);
-                    } else {
+                int nextRowStart = nextRow * spanCount;
+                int nextRowLastPos = Math.min((nextRow + 1) * spanCount - 1, total - 1);
+                if (nextRowStart < total) {
+                    int newPos = nextRow * spanCount + column;
+                    if (newPos < total) {
+                        focusAndScrollToPosition(rv, newPos);
+                    } else if (column < nextRowLastPos + 1) {
+                        focusAndScrollToPosition(rv, nextRowLastPos);
+                    } else if (total > nextRow * spanCount) {
                         focusAndScrollToPosition(rv, total - 1);
+                    }
+                } else {
+                    androidx.recyclerview.widget.RecyclerView.ViewHolder lastHolder =
+                            rv.findViewHolderForAdapterPosition(mDpadCurrentPosition);
+                    if (lastHolder != null && lastHolder.itemView != null) {
+                        clearHighlightImmediate(lastHolder.itemView);
+                    }
+                    if (addBtn != null) {
+                        addBtn.setClickable(true);
+                        addBtn.setFocusable(true);
+                        addBtn.setFocusableInTouchMode(true);
+                        addBtn.requestFocus();
+                        addBtn.setPressed(false);
                     }
                 }
                 return true;
@@ -565,6 +596,10 @@ public class PhotoPickerActivity extends AppCompatActivity {
                 return true;
             case android.view.KeyEvent.KEYCODE_DPAD_CENTER:
             case android.view.KeyEvent.KEYCODE_ENTER:
+                if (focus != null && focus.equals(addBtn)) {
+                    addBtn.performClick();
+                    return true;
+                }
                 if (mDpadCurrentPosition >= 0 && mDpadCurrentPosition < total) {
                     androidx.recyclerview.widget.RecyclerView.ViewHolder holder =
                             rv.findViewHolderForAdapterPosition(mDpadCurrentPosition);
@@ -579,6 +614,14 @@ public class PhotoPickerActivity extends AppCompatActivity {
 
     public void setPhotosTabFragment(com.android.providers.media.photopicker.ui.PhotosTabFragment fragment) {
         mPhotosTabFragment = fragment;
+    }
+
+    public void setAlbumContentPhotosFragment(com.android.providers.media.photopicker.ui.PhotosTabFragment fragment) {
+        mAlbumContentPhotosFragment = fragment;
+    }
+
+    public void clearAlbumContentPhotosFragment() {
+        mAlbumContentPhotosFragment = null;
     }
 
     public void setAlbumsTabFragment(com.android.providers.media.photopicker.ui.AlbumsTabFragment fragment) {
@@ -628,6 +671,7 @@ public class PhotoPickerActivity extends AppCompatActivity {
     public void onBackPressed() {
         int backStackEntryCount = getSupportFragmentManager().getBackStackEntryCount();
         mPickerViewModel.logBackGestureWithStackCount(backStackEntryCount);
+        clearAlbumContentPhotosFragment();
         super.onBackPressed();
     }
 

@@ -92,6 +92,10 @@ public abstract class TabFragment extends Fragment {
         return mRecyclerView;
     }
 
+    public android.widget.Button getAddButton() {
+        return mAddButton;
+    }
+
     private ExtendedFloatingActionButton mProfileButton;
     private ExtendedFloatingActionButton mProfileMenuButton;
     private UserIdManager mUserIdManager;
