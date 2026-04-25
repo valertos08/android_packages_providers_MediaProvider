@@ -380,15 +380,21 @@ public abstract class TabFragment extends Fragment {
     }
 
     private void setCustomPickerButtonColors(int accentColor) {
-        String addButtonTextColor =
-                mPickerViewModel.getPickerAccentColorParameters().isAccentColorBright()
-                        ? AccentColorResources.DARK_TEXT_COLOR
-                        : AccentColorResources.LIGHT_TEXT_COLOR;
-        mAddButton.setBackgroundColor(accentColor);
-        mAddButton.setTextColor(Color.parseColor(addButtonTextColor));
-        mViewSelectedButton.setTextColor(accentColor);
-        mViewSelectedButton.setIconTint(ColorStateList.valueOf(accentColor));
+        int color = getAccentColor();
+        mAddButton.setBackgroundColor(color);
+        mAddButton.setTextColor(Color.WHITE);
 
+        if (mViewSelectedButton != null) {
+            mViewSelectedButton.setTextColor(color);
+            mViewSelectedButton.setIconTint(ColorStateList.valueOf(color));
+        }
+    }
+
+    private int getAccentColor() {
+        if (mPickerViewModel.getPickerAccentColorParameters().isCustomPickerColorSet()) {
+            return mPickerViewModel.getPickerAccentColorParameters().getPickerAccentColor();
+        }
+        return 0xFF1E88E5;
     }
 
     private void updateRecyclerViewBottomPadding() {

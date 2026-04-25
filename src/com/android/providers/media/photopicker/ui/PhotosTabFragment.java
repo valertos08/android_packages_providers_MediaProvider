@@ -232,6 +232,7 @@ public class PhotosTabFragment extends TabFragment {
 
         setLayoutManager(context, adapter, GRID_COLUMN_COUNT);
         mRecyclerView.setAdapter(adapter);
+        mRecyclerView.setDefaultFocusHighlightEnabled(true);
         mRecyclerView.addItemDecoration(itemDecoration);
 
         mRecyclerView.addRecyclerListener(

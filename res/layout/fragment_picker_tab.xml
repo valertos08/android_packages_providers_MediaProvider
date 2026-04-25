@@ -65,7 +65,9 @@
         android:layout_height="match_parent"
         android:clipToPadding="false"
         android:drawSelectorOnTop="true"
-        android:overScrollMode="never"/>
+        android:overScrollMode="never"
+        android:focusable="true"
+        android:descendantFocusability="afterDescendants"/>
 
     <TextView
         android:id="@+id/loading_text_view"

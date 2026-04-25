@@ -19,6 +19,7 @@ package com.android.providers.media.photopicker.ui;
 import android.provider.CloudMediaProviderContract;
 import android.text.TextUtils;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -30,6 +31,7 @@ import com.android.providers.media.photopicker.data.model.Category;
 import com.android.providers.media.photopicker.util.AccentColorResources;
 import com.android.providers.media.photopicker.viewmodel.PickerViewModel;
 import com.android.providers.media.util.StringUtils;
+import com.google.android.material.card.MaterialCardView;
 
 import java.text.NumberFormat;
 import java.util.Locale;
@@ -68,6 +70,35 @@ class AlbumGridHolder extends RecyclerView.ViewHolder {
         mHasMimeTypeFilter = hasMimeTypeFilter;
         mPickerViewModel = pickerViewModel;
         mOnAlbumClickListener = onAlbumClickListener;
+
+        itemView.setOnFocusChangeListener((v, hasFocus) -> {
+            if (v instanceof ViewGroup) {
+                ViewGroup root = (ViewGroup) v;
+                for (int i = 0; i < root.getChildCount(); i++) {
+                    View child = root.getChildAt(i);
+                    if (child instanceof MaterialCardView) {
+                        MaterialCardView card = (MaterialCardView) child;
+                        int accentColor = getAccentColor();
+                        if (hasFocus) {
+                            card.setStrokeWidth(8);
+                            card.setStrokeColor(accentColor);
+                            card.setElevation(8f);
+                        } else {
+                            card.setStrokeWidth(0);
+                            card.setElevation(0f);
+                        }
+                        break;
+                    }
+                }
+            }
+        });
+    }
+
+    private int getAccentColor() {
+        if (mPickerViewModel.getPickerAccentColorParameters().isCustomPickerColorSet()) {
+            return mPickerViewModel.getPickerAccentColorParameters().getPickerAccentColor();
+        }
+        return 0xFF1E88E5;
     }
 
     void bind(@NonNull Category category) {

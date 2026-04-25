@@ -216,6 +216,8 @@ public class PhotoPickerActivity extends AppCompatActivity {
         mProfileMenuButton = findViewById(R.id.profile_menu_button);
         mTabLayout = findViewById(R.id.tab_layout);
 
+        mTabLayout.setSelectedTabIndicatorColor(getAccentColor());
+
         mAccessibilityManager = getSystemService(AccessibilityManager.class);
         mIsAccessibilityEnabled = mAccessibilityManager.isEnabled();
 
@@ -242,6 +244,13 @@ public class PhotoPickerActivity extends AppCompatActivity {
             mPickerViewModel.logPickerOpened(Binder.getCallingUid(), getCallingPackage(),
                     intentAction);
         }
+    }
+
+    private int getAccentColor() {
+        if (mIsCustomPickerColorSet) {
+            return mPickerViewModel.getPickerAccentColorParameters().getPickerAccentColor();
+        }
+        return 0xFF1E88E5;
     }
 
     @Override
