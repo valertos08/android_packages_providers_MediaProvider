@@ -93,28 +93,7 @@
                     android:accessibilityTraversalAfter="@+id/privacy_text"
                     android:accessibilityTraversalBefore="@+id/fragment_container"
                     app:titleTextColor="?attr/pickerTextColor"
-                    app:titleTextAppearance="@style/PickerToolbarTitleTextAppearance">
-
-                    <com.google.android.material.tabs.TabLayout
-                        android:id="@+id/tab_layout"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@color/picker_background_color"
-                        android:layout_gravity="center"
-                        android:focusable="true"
-                        app:tabBackground="@drawable/picker_tab_background"
-                        app:tabIndicatorAnimationMode="linear"
-                        app:tabIndicatorColor="?attr/pickerSelectedTabBackgroundColor"
-                        app:tabIndicatorGravity="center"
-                        app:tabMinWidth="@dimen/picker_tab_min_width"
-                        app:tabPaddingStart="@dimen/picker_tab_horizontal_gap"
-                        app:tabPaddingEnd="@dimen/picker_tab_horizontal_gap"
-                        app:tabRippleColor="@null"
-                        app:tabSelectedTextColor="?attr/pickerSelectedTabTextColor"
-                        app:tabTextAppearance="@style/PickerTabTextAppearance"
-                        app:tabTextColor="?android:attr/textColorSecondary" />
-
-                </androidx.appcompat.widget.Toolbar>
+                    app:titleTextAppearance="@style/PickerToolbarTitleTextAppearance" />
 
             </com.google.android.material.appbar.AppBarLayout>
 

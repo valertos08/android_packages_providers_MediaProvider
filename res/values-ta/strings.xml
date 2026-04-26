@@ -59,6 +59,7 @@
     <string name="picker_album_media_empty_message" msgid="7061850698189881671">"ஆதரிக்கப்படும் படங்களோ வீடியோக்களோ இல்லை"</string>
     <string name="picker_albums_empty_message" msgid="8341079772950966815">"ஆல்பங்கள் இல்லை"</string>
     <string name="picker_view_selected" msgid="2266031384396143883">"தேர்ந்தெடுத்ததைக் காட்டு"</string>
+    <string name="picker_all_photos">All Photos</string>
     <string name="picker_photos" msgid="7415035516411087392">"படங்கள்"</string>
     <!-- no translation found for picker_videos (2886971435439047097) -->
     <skip />

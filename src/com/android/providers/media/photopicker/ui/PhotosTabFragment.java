@@ -560,6 +560,20 @@ public class PhotosTabFragment extends TabFragment {
     }
 
     /**
+     * Create the fragment showing all photos and add it into the FragmentManager
+     *
+     * @param fm the fragment manager
+     */
+    public static void showAllPhotos(FragmentManager fm) {
+        final FragmentTransaction ft = fm.beginTransaction();
+        final PhotosTabFragment fragment = new PhotosTabFragment();
+        fragment.mCategory = Category.DEFAULT;
+        ft.replace(R.id.fragment_container, fragment, FRAGMENT_TAG);
+        ft.addToBackStack(FRAGMENT_TAG);
+        ft.commitAllowingStateLoss();
+    }
+
+    /**
      * Get the fragment in the FragmentManager
      *
      * @param fm The fragment manager

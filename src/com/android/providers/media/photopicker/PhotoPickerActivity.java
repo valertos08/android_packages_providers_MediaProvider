@@ -92,7 +92,6 @@ import com.android.providers.media.util.ForegroundThread;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetBehavior.BottomSheetCallback;
-import com.google.android.material.tabs.TabLayout;
 import com.google.common.collect.Lists;
 
 import java.util.List;
@@ -122,7 +121,6 @@ public class PhotoPickerActivity extends AppCompatActivity {
     private View mProfileButton;
     private View mProfileMenuButton;
     private TextView mPrivacyText;
-    private TabLayout mTabLayout;
     private Toolbar mToolbar;
     private CrossProfileListeners mCrossProfileListeners;
     private ConfigStore mConfigStore;
@@ -214,9 +212,7 @@ public class PhotoPickerActivity extends AppCompatActivity {
         mBottomBar = findViewById(R.id.picker_bottom_bar);
         mProfileButton = findViewById(R.id.profile_button);
         mProfileMenuButton = findViewById(R.id.profile_menu_button);
-        mTabLayout = findViewById(R.id.tab_layout);
-
-        mTabLayout.setSelectedTabIndicatorColor(getAccentColor());
+        mPrivacyText = findViewById(R.id.privacy_text);
 
         mAccessibilityManager = getSystemService(AccessibilityManager.class);
         mIsAccessibilityEnabled = mAccessibilityManager.isEnabled();
@@ -873,18 +869,14 @@ public class PhotoPickerActivity extends AppCompatActivity {
      */
     private void updateToolbar(@NonNull LayoutModeUtils.Mode mode) {
         final boolean isPreview = mode.isPreview;
-        final boolean shouldShowTabLayout = mode.isPhotosTabOrAlbumsTab;
-        // 1. Set the tabLayout visibility
-        mTabLayout.setVisibility(shouldShowTabLayout ? View.VISIBLE : View.GONE);
+        final boolean isTabMode = mode.isPhotosTabOrAlbumsTab;
 
-        // 2. Set the toolbar color
+        // Set the toolbar color
         final ColorDrawable toolbarColor;
-        if (isPreview && !shouldShowTabLayout) {
+        if (isPreview && !isTabMode) {
             if (isOrientationLandscape()) {
-                // Toolbar in Preview will have transparent color in Landscape mode.
                 toolbarColor = new ColorDrawable(getColor(android.R.color.transparent));
             } else {
-                // Toolbar in Preview will have a solid color with 90% opacity in Portrait mode.
                 toolbarColor = new ColorDrawable(getColor(R.color.preview_scrim_solid_color));
             }
         } else {
@@ -892,9 +884,9 @@ public class PhotoPickerActivity extends AppCompatActivity {
         }
         getSupportActionBar().setBackgroundDrawable(toolbarColor);
 
-        // 3. Set the toolbar icon.
+        // Set the toolbar icon.
         final Drawable icon;
-        if (shouldShowTabLayout) {
+        if (isTabMode) {
             icon = getDrawable(R.drawable.ic_close);
             if (mIsCustomPickerColorSet) {
                 icon.setTint(mPickerViewModel.getPickerAccentColorParameters().getThemeBasedColor(
@@ -904,12 +896,11 @@ public class PhotoPickerActivity extends AppCompatActivity {
             }
         } else {
             icon = getDrawable(R.drawable.ic_arrow_back);
-            // Preview mode has dark background, hence icons will be WHITE in color
             icon.setTint(isPreview ? Color.WHITE : mToolBarIconColor);
         }
         getSupportActionBar().setHomeAsUpIndicator(icon);
         getSupportActionBar().setHomeActionContentDescription(
-                shouldShowTabLayout ? android.R.string.cancel
+                isTabMode ? android.R.string.cancel
                         : R.string.abc_action_bar_up_description);
         if (mToolbar.getOverflowIcon() != null) {
             mToolbar.getOverflowIcon().setTint(isPreview ? Color.WHITE : mToolBarIconColor);

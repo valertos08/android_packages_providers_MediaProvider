@@ -16,6 +16,7 @@
 package com.android.providers.media.photopicker.ui;
 
 import android.content.Context;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -24,8 +25,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.LiveData;
 
 import com.android.providers.media.R;
+import com.android.providers.media.photopicker.data.model.Category;
 import com.android.providers.media.photopicker.util.LayoutModeUtils;
 
 import java.util.ArrayList;
@@ -64,8 +67,22 @@ public class AlbumsTabFragment extends TabFragment {
                 adapter.updateCategoryList(new ArrayList<>());
                 updateVisibilityForEmptyView(false);
             } else {
-                adapter.updateCategoryList(categoryList);
-                // Handle emptyView's visibility
+                ArrayList<Category> baseList = new ArrayList<>(categoryList);
+                Category allPhotos = new Category("ALL_PHOTOS", null,
+                        getString(R.string.picker_all_photos), null, 0, true);
+                baseList.add(0, allPhotos);
+                adapter.updateCategoryList(baseList);
+
+                mPickerViewModel.getAllPhotosCoverUri().observe(this, coverUri -> {
+                    if (coverUri != null) {
+                        ArrayList<Category> updatedList = new ArrayList<>(baseList);
+                        Category updatedAllPhotos = new Category("ALL_PHOTOS", null,
+                                getString(R.string.picker_all_photos), coverUri, 0, true);
+                        updatedList.set(0, updatedAllPhotos);
+                        adapter.updateCategoryList(updatedList);
+                    }
+                });
+
                 updateVisibilityForEmptyView(/* shouldShowEmptyView */ categoryList.size() == 0);
             }
         });
@@ -94,7 +111,12 @@ public class AlbumsTabFragment extends TabFragment {
             (category, position) -> {
                 mPickerViewModel.logAlbumOpened(category, position);
                 try {
-                    PhotosTabFragment.show(requireActivity().getSupportFragmentManager(), category);
+                    if ("ALL_PHOTOS".equals(category.getId())) {
+                        // Show all photos (Photos tab content)
+                        PhotosTabFragment.showAllPhotos(requireActivity().getSupportFragmentManager());
+                    } else {
+                        PhotosTabFragment.show(requireActivity().getSupportFragmentManager(), category);
+                    }
                 } catch (RuntimeException e) {
                     Log.e(TAG, "Fragment is likely not attached to an activity. ", e);
                 }
@@ -110,5 +132,9 @@ public class AlbumsTabFragment extends TabFragment {
         final AlbumsTabFragment fragment = new AlbumsTabFragment();
         ft.replace(R.id.fragment_container, fragment);
         ft.commitAllowingStateLoss();
+    }
+
+    public static AlbumsTabFragment newInstance() {
+        return new AlbumsTabFragment();
     }
 }

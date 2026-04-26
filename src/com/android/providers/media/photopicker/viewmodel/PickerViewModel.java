@@ -124,13 +124,16 @@ public class PickerViewModel extends AndroidViewModel {
     private final MuteStatus mMuteStatus;
     public boolean mEmptyPageDisplayed = false;
     @MediaStore.PickImagesTab
-    private int mPickerLaunchTab = MediaStore.PICK_IMAGES_TAB_IMAGES;
+    private int mPickerLaunchTab = MediaStore.PICK_IMAGES_TAB_ALBUMS;
 
     // TODO(b/193857982): We keep these four data sets now, we may need to find a way to reduce the
     //  data set to reduce memories.
     // The list of Items with all photos and videos
     private MutableLiveData<PaginatedItemsResult> mItemsResult;
     private int mItemsPageSize = -1;
+
+    // Cover URI for "All Photos" album
+    private MutableLiveData<Uri> mAllPhotosCoverUri;
 
     // The list of Items with all photos and videos in category
     private MutableLiveData<PaginatedItemsResult> mCategoryItemsResult;
@@ -558,8 +561,10 @@ public class PickerViewModel extends AndroidViewModel {
         if (mItemsResult == null) {
             mItemsResult = new MutableLiveData<>();
         }
-        loadItemsAsync(pagingParameters, /* isReset */ isReset, action);
+        loadItemsAsync(pagingParameters, isReset, action);
     }
+
+    
 
     private UserId getCurrentUserProfileId() {
         if (mConfigStore.isPrivateSpaceInPhotoPickerEnabled() && SdkLevel.isAtLeastS()) {
@@ -854,6 +859,30 @@ public class PickerViewModel extends AndroidViewModel {
             updateCategories();
         }
         return mCategoryList;
+    }
+
+    /**
+     * Returns the cover URI for "All Photos" album.
+     */
+    public LiveData<Uri> getAllPhotosCoverUri() {
+        if (mAllPhotosCoverUri == null) {
+            mAllPhotosCoverUri = new MutableLiveData<>();
+            loadAllPhotosCover();
+        }
+        return mAllPhotosCoverUri;
+    }
+
+    private void loadAllPhotosCover() {
+        final UserId userId = getCurrentUserProfileId();
+        DataLoaderThread.getHandler().postDelayed(() -> {
+            try (Cursor cursor = fetchItems(Category.DEFAULT, userId,
+                    new PaginationParameters(1, Long.MAX_VALUE, -1))) {
+                if (cursor != null && cursor.moveToFirst()) {
+                    Item item = Item.fromCursor(cursor, userId);
+                    mAllPhotosCoverUri.postValue(item.getContentUri());
+                }
+            }
+        }, TOKEN, DELAY_MILLIS);
     }
 
     private List<Category> loadCategories(UserId userId) {

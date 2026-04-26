@@ -149,6 +149,9 @@
     <!-- The text of the photos tab in PhotoPicker for 'Image/' mime type. [CHAR LIMIT=30] -->
     <string name="picker_photos">Photos</string>
 
+    <!-- The text for All Photos album in PhotoPicker. [CHAR LIMIT=30] -->
+    <string name="picker_all_photos">All Photos</string>
+
     <!-- The text of the photos tab in PhotoPicker for 'Video/' mime type. [CHAR LIMIT=30] -->
     <string name="picker_videos">@string/root_videos</string>
 
