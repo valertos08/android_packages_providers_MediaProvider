@@ -165,55 +165,56 @@ class MediaItemGridViewHolder extends RecyclerView.ViewHolder {
             itemView.setStateDescription(
                     isSelected ? null : context.getString(R.string.not_selected));
 
-            if (isSelected) {
-                setCustomSelectedMediaIconColors();
-            }
+            setCustomSelectedMediaIconColors(isSelected);
         }
     }
 
-    private void setCustomSelectedMediaIconColors() {
+    private void setCustomSelectedMediaIconColors(boolean isSelected) {
         int checkColor = getAccentColor();
-        int unselectedColor = mPickerViewModel.getPickerAccentColorParameters().isCustomPickerColorSet()
-                ? mPickerViewModel.getPickerAccentColorParameters().getThemeBasedColor(
-                        AccentColorResources.SURFACE_CONTAINER_COLOR_LIGHT,
-                        AccentColorResources.SURFACE_CONTAINER_COLOR_DARK)
-                : 0xFFE0E0E0;
+        int defaultUnselectedColor = 0xFFBDBDBD;
 
-        StateListDrawable drawableCheckIcon = (StateListDrawable) mCheckIcon.getDrawable();
-        if (drawableCheckIcon != null) {
+        Drawable checkIconDrawable = mCheckIcon.getDrawable();
+        if (checkIconDrawable != null) {
+            Drawable checkIconCopy = checkIconDrawable.mutate();
+            StateListDrawable drawableCheckIcon = (StateListDrawable) checkIconCopy;
             LayerDrawable checkIcon = (LayerDrawable) drawableCheckIcon.getStateDrawable(0);
             VectorDrawable selectedMediaBaseCircle = (VectorDrawable) checkIcon.findDrawableByLayerId(
                     R.id.selected_radio_button_selected_mark);
             if (selectedMediaBaseCircle != null) {
-                selectedMediaBaseCircle.setTint(checkColor);
+                selectedMediaBaseCircle.setTint(isSelected ? checkColor : defaultUnselectedColor);
             }
             VectorDrawable uncheckedIcon = (VectorDrawable) drawableCheckIcon.getStateDrawable(1);
             if (uncheckedIcon != null) {
-                uncheckedIcon.setTint(unselectedColor);
+                uncheckedIcon.setTint(defaultUnselectedColor);
             }
             mCheckIcon.setImageDrawable(drawableCheckIcon);
         }
 
-        StateListDrawable drawableOrderedSelection =
-                (StateListDrawable) mSelectedOrderText.getBackground();
-        if (drawableOrderedSelection != null) {
+        Drawable orderedBackground = mSelectedOrderText.getBackground();
+        if (orderedBackground != null) {
+            Drawable orderedCopy = orderedBackground.mutate();
+            StateListDrawable drawableOrderedSelection = (StateListDrawable) orderedCopy;
             LayerDrawable orderedIcon = (LayerDrawable) drawableOrderedSelection.getStateDrawable(0);
             GradientDrawable orderedIconBaseCircle =
                     (GradientDrawable) orderedIcon.findDrawableByLayerId(
                             R.id.ordered_selection_selected_icon);
             if (orderedIconBaseCircle != null) {
-                orderedIconBaseCircle.setColor(checkColor);
+                orderedIconBaseCircle.setColor(isSelected ? checkColor : defaultUnselectedColor);
             }
             VectorDrawable orderedSelectionSelectedItem =
                     (VectorDrawable) drawableOrderedSelection.getStateDrawable(1);
             if (orderedSelectionSelectedItem != null) {
-                orderedSelectionSelectedItem.setTint(unselectedColor);
+                orderedSelectionSelectedItem.setTint(defaultUnselectedColor);
             }
             mSelectedOrderText.setBackground(drawableOrderedSelection);
-            mSelectedOrderText.setTextColor(Color.parseColor(
-                    mPickerViewModel.getPickerAccentColorParameters().isAccentColorBright()
-                            ? AccentColorResources.DARK_TEXT_COLOR
-                            : AccentColorResources.LIGHT_TEXT_COLOR));
+            if (isSelected) {
+                mSelectedOrderText.setTextColor(Color.parseColor(
+                        mPickerViewModel.getPickerAccentColorParameters().isAccentColorBright()
+                                ? AccentColorResources.DARK_TEXT_COLOR
+                                : AccentColorResources.LIGHT_TEXT_COLOR));
+            } else {
+                mSelectedOrderText.setTextColor(0xFF000000);
+            }
         }
     }
 
