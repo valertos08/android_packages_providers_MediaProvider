@@ -61,6 +61,7 @@ import com.android.providers.media.util.MimeUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * This is a facade that hides the complexities of executing some SQL statements on the external db.
@@ -462,7 +463,8 @@ public class ExternalDbFacade {
 
     /**
      * Returns the media item categories from the files table.
-     * Categories are determined with the {@link #LOCAL_ALBUM_IDS}.
+     * First adds special albums (Camera, Screenshots, Downloads) from {@link #LOCAL_ALBUM_IDS},
+     * then adds dynamic albums from all other folders containing media files.
      * If there are no media items under an albumId, the album is skipped from the results.
      */
     public Cursor queryAlbums(String[] mimeTypes) {
@@ -500,7 +502,79 @@ public class ExternalDbFacade {
             c.addRow(projectionValue);
         }
 
+        Cursor dynamicAlbumsCursor = getDynamicAlbums(mimeTypes);
+        if (dynamicAlbumsCursor != null) {
+            while (dynamicAlbumsCursor.moveToNext()) {
+                String bucketName = getCursorString(dynamicAlbumsCursor, "bucket_name");
+                if (bucketName == null || isSpecialAlbum(bucketName)) {
+                    continue;
+                }
+
+                long count = getCursorLong(dynamicAlbumsCursor, "media_count");
+                if (count == 0) {
+                    continue;
+                }
+
+                final String[] projectionValue = new String[] {
+                    /* albumId */ bucketName,
+                    getCursorString(dynamicAlbumsCursor, "date_taken_millis"),
+                    /* displayName */ bucketName,
+                    getCursorString(dynamicAlbumsCursor, "media_cover_id"),
+                    String.valueOf(count),
+                    PickerSyncController.LOCAL_PICKER_PROVIDER_AUTHORITY
+                };
+
+                c.addRow(projectionValue);
+            }
+            dynamicAlbumsCursor.close();
+        }
+
         return c;
+    }
+
+    private Cursor getDynamicAlbums(String[] mimeTypes) {
+        final StringBuilder sql = new StringBuilder();
+        final ArrayList<String> selectionArgs = new ArrayList<>();
+
+        sql.append("SELECT bucket_display_name AS bucket_name, ");
+        sql.append("MAX(COALESCE(datetaken, date_modified * 1000)) AS date_taken_millis, ");
+        sql.append("MAX(_id) AS media_cover_id, ");
+        sql.append("COUNT(*) AS media_count ");
+        sql.append("FROM files ");
+        sql.append("WHERE media_type IN (1, 2) ");
+        sql.append("AND is_trashed = 0 ");
+        sql.append("AND is_pending = 0 ");
+        sql.append("AND (datetaken IS NOT NULL OR date_modified IS NOT NULL) ");
+        sql.append("AND bucket_display_name IS NOT NULL ");
+
+        if (mimeTypes != null && mimeTypes.length > 0) {
+            StringBuilder mimeFilter = new StringBuilder("AND (");
+            for (int i = 0; i < mimeTypes.length; i++) {
+                if (i > 0) mimeFilter.append(" OR ");
+                mimeFilter.append("mime_type LIKE ?");
+                selectionArgs.add(mimeTypes[i].replace("*", "%"));
+            }
+            mimeFilter.append(")");
+            sql.append(mimeFilter);
+        }
+
+        sql.append("GROUP BY bucket_display_name ");
+        sql.append("ORDER BY media_count DESC");
+
+        return mDatabaseHelper.runWithTransaction(db ->
+            db.rawQuery(sql.toString(), selectionArgs.toArray(new String[0]))
+        );
+    }
+
+    private boolean isSpecialAlbum(String bucketName) {
+        if (bucketName == null) return false;
+        String lowerName = bucketName.toLowerCase(Locale.ROOT);
+        // DCIM corresponds to Camera album
+        // Download corresponds to Downloads album
+        // Screenshots corresponds to Screenshots album
+        return "dcim".equals(lowerName)
+                || "download".equals(lowerName)
+                || "screenshots".equals(lowerName);
     }
 
     private static Cursor query(SQLiteQueryBuilder qb, SQLiteDatabase db, String[] projection,
@@ -531,7 +605,8 @@ public class ExternalDbFacade {
                 qb.appendWhereStandalone(WHERE_IS_DOWNLOAD);
                 break;
             default:
-                Log.w(TAG, "No match for album: " + albumId);
+                qb.appendWhereStandalone("bucket_display_name = ?");
+                selectionArgs.add(albumId);
                 break;
         }
 
