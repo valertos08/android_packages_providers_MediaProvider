@@ -15,25 +15,20 @@
  */
 package com.android.providers.media.photopicker.ui;
 
-import android.graphics.Color;
-import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
-import android.util.Log;
+import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.android.providers.media.R;
-import com.android.providers.media.photopicker.util.AccentColorResources;
 import com.android.providers.media.photopicker.viewmodel.PickerViewModel;
 
 /**
@@ -58,10 +53,14 @@ public class TabContainerFragment extends Fragment {
         final ViewModelProvider viewModelProvider = new ViewModelProvider(requireActivity());
         mPickerViewModel = viewModelProvider.get(PickerViewModel.class);
 
-        // Directly show AlbumsTabFragment - no tabs
         if (savedInstanceState == null) {
             final FragmentTransaction ft = getChildFragmentManager().beginTransaction();
-            final AlbumsTabFragment fragment = AlbumsTabFragment.newInstance();
+            final Fragment fragment;
+            if (mPickerViewModel.getPickerLaunchTab() == MediaStore.PICK_IMAGES_TAB_IMAGES) {
+                fragment = PhotosTabFragment.newInstance();
+            } else {
+                fragment = AlbumsTabFragment.newInstance();
+            }
             ft.replace(R.id.fragment_container, fragment);
             ft.commitAllowingStateLoss();
         }

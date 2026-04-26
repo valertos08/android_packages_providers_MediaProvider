@@ -48,6 +48,7 @@
             android:contentDescription="@null"/>
 
         <com.android.providers.media.photopicker.ui.SafetyProtectionSectionView
+            android:id="@+id/safety_protection_section"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="5dp"
@@ -71,31 +72,20 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@color/picker_background_color"
+                app:titleTextColor="?attr/pickerTextColor"
+                app:titleTextAppearance="@style/PickerToolbarTitleTextAppearance" />
+
             <androidx.fragment.app.FragmentContainerView
                 android:id="@+id/fragment_container"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:importantForAccessibility="yes"/>
-
-            <com.google.android.material.appbar.AppBarLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="top"
-                android:background="@android:color/transparent"
-                app:liftOnScroll="true">
-
-                <androidx.appcompat.widget.Toolbar
-                    android:id="@+id/toolbar"
-                    android:layout_width="match_parent"
-                    android:layout_height="?attr/actionBarSize"
-                    android:background="@color/picker_background_color"
-                    android:importantForAccessibility="yes"
-                    android:accessibilityTraversalAfter="@+id/privacy_text"
-                    android:accessibilityTraversalBefore="@+id/fragment_container"
-                    app:titleTextColor="?attr/pickerTextColor"
-                    app:titleTextAppearance="@style/PickerToolbarTitleTextAppearance" />
-
-            </com.google.android.material.appbar.AppBarLayout>
+                android:importantForAccessibility="yes"
+                app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
 
             <FrameLayout
                 android:id="@+id/picker_bottom_bar"

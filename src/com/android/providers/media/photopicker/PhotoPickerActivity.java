@@ -488,6 +488,38 @@ public class PhotoPickerActivity extends AppCompatActivity {
         dragBarDrawable.setColor(dragBarColor);
     }
 
+    public void hideHeader() {
+        if (mToolbar != null) {
+            mToolbar.setVisibility(View.GONE);
+        }
+        if (mDragBar != null) {
+            mDragBar.setVisibility(View.GONE);
+        }
+        if (mPrivacyText != null) {
+            mPrivacyText.setVisibility(View.GONE);
+        }
+        View safetyProtection = findViewById(R.id.safety_protection_section);
+        if (safetyProtection != null) {
+            safetyProtection.setVisibility(View.GONE);
+        }
+    }
+
+    public void showHeader() {
+        if (mToolbar != null) {
+            mToolbar.setVisibility(View.VISIBLE);
+        }
+        if (mDragBar != null) {
+            mDragBar.setVisibility(View.VISIBLE);
+        }
+        if (mPrivacyText != null) {
+            mPrivacyText.setVisibility(View.VISIBLE);
+        }
+        View safetyProtection = findViewById(R.id.safety_protection_section);
+        if (safetyProtection != null) {
+            safetyProtection.setVisibility(View.VISIBLE);
+        }
+    }
+
     private BottomSheetCallback createBottomSheetCallBack() {
         return new BottomSheetCallback() {
             private boolean mIsProfileButtonHiddenDueToBottomSheetClosing = false;

@@ -582,6 +582,10 @@ public class PhotosTabFragment extends TabFragment {
         return fm.findFragmentByTag(FRAGMENT_TAG);
     }
 
+    public static PhotosTabFragment newInstance() {
+        return new PhotosTabFragment();
+    }
+
     /**
      * Hides progress bar and the loading photos message.
      * <p>This is executed with a delay of 0.6ms.

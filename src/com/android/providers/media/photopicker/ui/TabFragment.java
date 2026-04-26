@@ -59,6 +59,8 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.transition.Slide;
+import androidx.transition.Visibility;
 
 import com.android.modules.utils.build.SdkLevel;
 import com.android.providers.media.ConfigStore;
@@ -469,10 +471,24 @@ public abstract class TabFragment extends Fragment {
                 }
             }
         };
-        mRecyclerView.addOnScrollListener(mOnScrollListenerForMultiProfileButton);
+mRecyclerView.addOnScrollListener(mOnScrollListenerForMultiProfileButton);
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            private boolean mHeaderHidden = false;
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                if (dy > 0 && !mHeaderHidden) {
+                    requirePickerActivity().hideHeader();
+                    mHeaderHidden = true;
+                } else if (dy < 0 && mHeaderHidden) {
+                    requirePickerActivity().showHeader();
+                    mHeaderHidden = false;
+                }
+            }
+        });
     }
 
-    @RequiresApi(Build.VERSION_CODES.S)
+    @RequiresApi(api = Build.VERSION_CODES.S)
     private void setUpListenersForProfileButtonAndProfileMenuButton() {
         mProfileButton.setOnClickListener(v -> onClickProfileButtonGeneric());
         mProfileMenuButton.setOnClickListener(v -> onClickProfileMenuButton(v));
@@ -613,6 +629,20 @@ public abstract class TabFragment extends Fragment {
             setUpListenersForProfileButton();
         }
         setUpProfileButton();
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            private boolean mHeaderHidden = false;
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                if (dy > 0 && !mHeaderHidden) {
+                    requirePickerActivity().hideHeader();
+                    mHeaderHidden = true;
+                } else if (dy < 0 && mHeaderHidden) {
+                    requirePickerActivity().showHeader();
+                    mHeaderHidden = false;
+                }
+            }
+        });
     }
 
     @RequiresApi(Build.VERSION_CODES.S)
