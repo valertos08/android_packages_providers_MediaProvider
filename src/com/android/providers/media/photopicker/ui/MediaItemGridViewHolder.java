@@ -164,6 +164,56 @@ class MediaItemGridViewHolder extends RecyclerView.ViewHolder {
             // only to avoid that it says selected twice.
             itemView.setStateDescription(
                     isSelected ? null : context.getString(R.string.not_selected));
+
+            if (isSelected) {
+                setCustomSelectedMediaIconColors();
+            }
+        }
+    }
+
+    private void setCustomSelectedMediaIconColors() {
+        int checkColor = getAccentColor();
+        int unselectedColor = mPickerViewModel.getPickerAccentColorParameters().isCustomPickerColorSet()
+                ? mPickerViewModel.getPickerAccentColorParameters().getThemeBasedColor(
+                        AccentColorResources.SURFACE_CONTAINER_COLOR_LIGHT,
+                        AccentColorResources.SURFACE_CONTAINER_COLOR_DARK)
+                : 0xFFE0E0E0;
+
+        StateListDrawable drawableCheckIcon = (StateListDrawable) mCheckIcon.getDrawable();
+        if (drawableCheckIcon != null) {
+            LayerDrawable checkIcon = (LayerDrawable) drawableCheckIcon.getStateDrawable(0);
+            VectorDrawable selectedMediaBaseCircle = (VectorDrawable) checkIcon.findDrawableByLayerId(
+                    R.id.selected_radio_button_selected_mark);
+            if (selectedMediaBaseCircle != null) {
+                selectedMediaBaseCircle.setTint(checkColor);
+            }
+            VectorDrawable uncheckedIcon = (VectorDrawable) drawableCheckIcon.getStateDrawable(1);
+            if (uncheckedIcon != null) {
+                uncheckedIcon.setTint(unselectedColor);
+            }
+            mCheckIcon.setImageDrawable(drawableCheckIcon);
+        }
+
+        StateListDrawable drawableOrderedSelection =
+                (StateListDrawable) mSelectedOrderText.getBackground();
+        if (drawableOrderedSelection != null) {
+            LayerDrawable orderedIcon = (LayerDrawable) drawableOrderedSelection.getStateDrawable(0);
+            GradientDrawable orderedIconBaseCircle =
+                    (GradientDrawable) orderedIcon.findDrawableByLayerId(
+                            R.id.ordered_selection_selected_icon);
+            if (orderedIconBaseCircle != null) {
+                orderedIconBaseCircle.setColor(checkColor);
+            }
+            VectorDrawable orderedSelectionSelectedItem =
+                    (VectorDrawable) drawableOrderedSelection.getStateDrawable(1);
+            if (orderedSelectionSelectedItem != null) {
+                orderedSelectionSelectedItem.setTint(unselectedColor);
+            }
+            mSelectedOrderText.setBackground(drawableOrderedSelection);
+            mSelectedOrderText.setTextColor(Color.parseColor(
+                    mPickerViewModel.getPickerAccentColorParameters().isAccentColorBright()
+                            ? AccentColorResources.DARK_TEXT_COLOR
+                            : AccentColorResources.LIGHT_TEXT_COLOR));
         }
     }
 
