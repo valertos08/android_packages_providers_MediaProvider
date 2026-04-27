@@ -105,10 +105,18 @@ class MediaItemGridViewHolder extends RecyclerView.ViewHolder {
                     View child = root.getChildAt(i);
                     if (child instanceof MaterialCardView) {
                         MaterialCardView card = (MaterialCardView) child;
-                        int accentColor = getAccentColor();
+                        int strokeColor;
+                        if (mPickerViewModel.getPickerAccentColorParameters().isCustomPickerColorSet()) {
+                            strokeColor = mPickerViewModel.getPickerAccentColorParameters().getPickerAccentColor();
+                        } else {
+                            int[] attrs = { R.attr.pickerSelectedColor };
+                            android.content.res.TypedArray ta = itemView.getContext().obtainStyledAttributes(attrs);
+                            strokeColor = ta.getColor(0, 0);
+                            ta.recycle();
+                        }
                         if (hasFocus) {
                             card.setStrokeWidth(4);
-                            card.setStrokeColor(accentColor);
+                            card.setStrokeColor(strokeColor);
                             card.setOutlineProvider(null);
                         } else {
                             card.setStrokeWidth(0);
@@ -119,13 +127,6 @@ class MediaItemGridViewHolder extends RecyclerView.ViewHolder {
                 }
             }
         });
-    }
-
-    private int getAccentColor() {
-        if (mPickerViewModel.getPickerAccentColorParameters().isCustomPickerColorSet()) {
-            return mPickerViewModel.getPickerAccentColorParameters().getPickerAccentColor();
-        }
-        return 0xFF1E88E5;
     }
 
     public void bind(@NonNull Item item, boolean isSelected) {
@@ -170,10 +171,18 @@ class MediaItemGridViewHolder extends RecyclerView.ViewHolder {
     }
 
     private void setCustomSelectedMediaIconColors(boolean isSelected) {
-        int checkColor = getAccentColor();
-        int defaultUnselectedColor = 0xFFBDBDBD;
+        final Context context = getContext();
+        int accentColor;
+        if (mPickerViewModel.getPickerAccentColorParameters().isCustomPickerColorSet()) {
+            accentColor = mPickerViewModel.getPickerAccentColorParameters().getPickerAccentColor();
+        } else {
+            int[] attrs = { R.attr.pickerSelectedColor };
+            android.content.res.TypedArray ta = context.obtainStyledAttributes(attrs);
+            accentColor = ta.getColor(0, 0);
+            ta.recycle();
+        }
 
-        Drawable checkIconDrawable = mCheckIcon.getDrawable();
+        Drawable checkIconDrawable = context.getDrawable(R.drawable.picker_item_check);
         if (checkIconDrawable != null) {
             Drawable checkIconCopy = checkIconDrawable.mutate();
             StateListDrawable drawableCheckIcon = (StateListDrawable) checkIconCopy;
@@ -181,16 +190,16 @@ class MediaItemGridViewHolder extends RecyclerView.ViewHolder {
             VectorDrawable selectedMediaBaseCircle = (VectorDrawable) checkIcon.findDrawableByLayerId(
                     R.id.selected_radio_button_selected_mark);
             if (selectedMediaBaseCircle != null) {
-                selectedMediaBaseCircle.setTint(isSelected ? checkColor : defaultUnselectedColor);
+                selectedMediaBaseCircle.setTint(accentColor);
             }
             VectorDrawable uncheckedIcon = (VectorDrawable) drawableCheckIcon.getStateDrawable(1);
             if (uncheckedIcon != null) {
-                uncheckedIcon.setTint(defaultUnselectedColor);
+                uncheckedIcon.setTint(accentColor);
             }
             mCheckIcon.setImageDrawable(drawableCheckIcon);
         }
 
-        Drawable orderedBackground = mSelectedOrderText.getBackground();
+        Drawable orderedBackground = context.getDrawable(R.drawable.picker_item_order);
         if (orderedBackground != null) {
             Drawable orderedCopy = orderedBackground.mutate();
             StateListDrawable drawableOrderedSelection = (StateListDrawable) orderedCopy;
@@ -199,12 +208,12 @@ class MediaItemGridViewHolder extends RecyclerView.ViewHolder {
                     (GradientDrawable) orderedIcon.findDrawableByLayerId(
                             R.id.ordered_selection_selected_icon);
             if (orderedIconBaseCircle != null) {
-                orderedIconBaseCircle.setColor(isSelected ? checkColor : defaultUnselectedColor);
+                orderedIconBaseCircle.setColor(accentColor);
             }
             VectorDrawable orderedSelectionSelectedItem =
                     (VectorDrawable) drawableOrderedSelection.getStateDrawable(1);
             if (orderedSelectionSelectedItem != null) {
-                orderedSelectionSelectedItem.setTint(defaultUnselectedColor);
+                orderedSelectionSelectedItem.setTint(accentColor);
             }
             mSelectedOrderText.setBackground(drawableOrderedSelection);
             if (isSelected) {

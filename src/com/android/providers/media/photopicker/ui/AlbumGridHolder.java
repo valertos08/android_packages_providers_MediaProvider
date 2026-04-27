@@ -98,7 +98,11 @@ class AlbumGridHolder extends RecyclerView.ViewHolder {
         if (mPickerViewModel.getPickerAccentColorParameters().isCustomPickerColorSet()) {
             return mPickerViewModel.getPickerAccentColorParameters().getPickerAccentColor();
         }
-        return 0xFF1E88E5;
+        int[] attrs = { R.attr.pickerSelectedColor };
+        android.content.res.TypedArray ta = itemView.getContext().obtainStyledAttributes(attrs);
+        int color = ta.getColor(0, 0);
+        ta.recycle();
+        return color;
     }
 
     void bind(@NonNull Category category) {
