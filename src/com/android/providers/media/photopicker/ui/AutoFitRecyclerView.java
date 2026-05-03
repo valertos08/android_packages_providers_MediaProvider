@@ -97,7 +97,7 @@ public class AutoFitRecyclerView extends RecyclerView {
                             if (mPendingFocusSearch) {
                                 mPendingFocusSearch = false;
                                 View v = super.focusSearch(mPendingFocusedView, mPendingDirection);
-                                if (v != null && v != mPendingFocusedView) {
+                                if (v != null && v != mPendingFocusedView && isViewFullyVisible(v)) {
                                     v.requestFocus();
                                 }
                             }

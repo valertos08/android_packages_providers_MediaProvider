@@ -111,6 +111,7 @@
                     app:iconPadding="@dimen/picker_viewselected_icon_padding"
                     app:iconSize="@dimen/picker_viewselected_icon_size"
                     app:iconTint="?attr/pickerSelectedColor"
+                    android:stateListAnimator="@animator/button_state_list_animator"
                     style="@style/MaterialBorderlessButtonStyle"/>
 
                 <Button
@@ -125,6 +126,7 @@
                     android:textColor="?attr/pickerHighlightTextColor"
                     android:backgroundTint="?attr/pickerHighlightColor"
                     android:focusable="true"
+                    android:stateListAnimator="@animator/button_state_list_animator"
                     style="@style/MaterialButtonStyle"/>
 
             </FrameLayout>
