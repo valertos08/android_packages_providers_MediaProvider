@@ -113,6 +113,7 @@ public class AutoFitRecyclerView extends RecyclerView {
 
     private boolean isViewFullyVisible(View view) {
         if (view == null) return false;
+        if (!view.isShown()) return false;
         int[] location = new int[2];
         view.getLocationOnScreen(location);
         int viewTop = location[1];

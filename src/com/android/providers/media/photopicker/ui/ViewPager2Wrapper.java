@@ -105,6 +105,22 @@ class ViewPager2Wrapper {
         mAdapter.onDestroy();
     }
 
+    public void setCurrentItem(int position) {
+        mViewPager.setCurrentItem(position, /* smoothScroll= */ true);
+    }
+
+    public int getCurrentItemPosition() {
+        return mViewPager.getCurrentItem();
+    }
+
+    public int getItemCount() {
+        return mAdapter.getItemCount();
+    }
+
+    public ViewPager2 getViewPager() {
+        return mViewPager;
+    }
+
     private class PlayerPageTransformer implements ViewPager2.PageTransformer {
         @Override
         public void transformPage(View view, float position) {

@@ -24,6 +24,7 @@
         android:layout_height="match_parent"
         android:id="@+id/preview_viewPager"
         android:layout_gravity="center"
+        android:focusable="true"
         android:accessibilityTraversalBefore="@+id/toolbar"/>
 
     <!-- Adds scrim for Toolbar -->

@@ -29,6 +29,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.KeyEvent;
+import android.view.ViewGroup;
 import android.widget.Button;
 
 import androidx.annotation.NonNull;
@@ -134,6 +136,24 @@ public class PreviewFragment extends Fragment {
         }
         mViewPager2Wrapper = new ViewPager2Wrapper(viewPager, selectedItemsList, mMuteStatus,
                 mOnCreateSurfaceController, mPickerViewModel::logVideoPreviewMuteButtonClick);
+
+        view.setOnKeyListener((v, keyCode, event) -> {
+            if (event.getAction() == KeyEvent.ACTION_UP) {
+                int currentItem = mViewPager2Wrapper.getCurrentItemPosition();
+                int totalItems = mViewPager2Wrapper.getItemCount();
+
+                if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && currentItem < totalItems - 1) {
+                    mViewPager2Wrapper.setCurrentItem(currentItem + 1);
+                    return true;
+                } else if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT && currentItem > 0) {
+                    mViewPager2Wrapper.setCurrentItem(currentItem - 1);
+                    return true;
+                }
+            }
+            return false;
+        });
+        view.setFocusable(true);
+        view.requestFocus();
 
         setUpPreviewLayout(view, getArguments());
         setupScrimLayerAndBottomBar(view);
